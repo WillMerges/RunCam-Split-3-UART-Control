@@ -5,17 +5,20 @@
 #include <termios.h>
 #include "ttyUSB.h"
 
+// global fd
+int usb_fd = -1;
+
 // returns fd on success, -1 on fail
 // sets global fd in the process
 int open_serial_USB() {
-    usb_fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+    usb_fd = open(TTY_PORT, O_RDWR | O_NOCTTY | O_NDELAY);
 
     if(usb_fd == -1) {
-        perror("unable to open /dev/ttyUSB0");
+        perror(TTY_PORT);
     } else {
-        fcntl(usb_fd, F_SETFL, FNDELAY); //FNDELAY makes reading non-blocking
+        fcntl(usb_fd, F_SETFL, FNDELAY; //FNDELAY makes reading non-blocking
     }
-    configure_tty;
+    configure_tty();
     return usb_fd;
 }
 

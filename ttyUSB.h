@@ -3,9 +3,7 @@
 
 // response packet is 40 bytes and longest data to be retrieved
 #define MAX_BUF_SIZE 40
-
-// global file descriptor
-int usb_fd = -1;
+#define TTY_PORT "/dev/ttyUSB0"
 
 int open_serial_USB();
 int write_buf(char* buffer, int n);
