@@ -13,9 +13,22 @@ int open_serial_USB() {
     if(usb_fd == -1) {
         perror("unable to open /dev/ttyUSB0");
     } else {
-        fcntl(ubs_fd, F_SETFL, FNDELAY) //FNDELAY makes reading non-blocking
+        fcntl(usb_fd, F_SETFL, FNDELAY); //FNDELAY makes reading non-blocking
     }
+    configure_tty;
     return usb_fd;
+}
+
+void configure_tty() {
+    if(usb_fd != -1) {
+        struct termios opt;
+        tcgetattr(usb_fd, &opt);
+        cfsetispeed(&opt, B9600); //set baudrate
+        cfsetospeed(&opt, B9600);
+        opt.c_cflag |= CLOCAL;
+        opt.c_cflag |= CREAD;
+        tcsetattr(usb_fd, TCSANOW, &opt);
+    }
 }
 
 // return num bytes written on success, -1 on fail

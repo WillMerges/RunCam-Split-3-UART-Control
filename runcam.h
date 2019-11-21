@@ -19,7 +19,7 @@ typedef struct request_control_s {
     uint8_t header;
     uint8_t command_id;
     uint8_t action_id;
-    unit8_t crc8;
+    uint8_t crc8;
 } request_control;
 
 #define RCDEVICE_PROTOCOL_COMMAND_5KEY_CONNECTION 0x04
