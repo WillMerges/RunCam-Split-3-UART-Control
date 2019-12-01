@@ -5,6 +5,10 @@
 #include <termios.h>
 #include "ttyUSB.h"
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 // global fd
 int usb_fd = -1;
 
@@ -16,7 +20,7 @@ int open_serial_USB() {
     if(usb_fd == -1) {
         perror(TTY_PORT);
     } else {
-        fcntl(usb_fd, F_SETFL, FNDELAY; //FNDELAY makes reading non-blocking
+        fcntl(usb_fd, F_SETFL, O_NDELAY); //FNDELAY makes reading non-blocking
     }
     configure_tty();
     return usb_fd;
@@ -35,7 +39,14 @@ void configure_tty() {
 }
 
 // return num bytes written on success, -1 on fail
-int write_buf(char* buffer, int n) {
+int write_buf(uint8_t* buffer, size_t n) {
+#ifdef DEBUG
+    printf("writing: ");
+    for(int i=0; i < n; i++) {
+        printf("0x%02X ", *(buffer+i));
+    }
+    printf("\n");
+#endif
     int ret = write(usb_fd, buffer, n);
     if(ret < 0) {
         perror("error writing to USB serial");
@@ -45,7 +56,7 @@ int write_buf(char* buffer, int n) {
 }
 
 // return bytes read on success, -1 otherwise
-int read_buf(char* buffer, int n) {
+int read_buf(uint8_t* buffer, size_t n) {
     int ret = read(usb_fd, buffer, n);
     if(ret < 0) {
         perror("error reading from USB serial");
