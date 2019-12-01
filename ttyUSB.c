@@ -30,8 +30,8 @@ void configure_tty() {
     if(usb_fd != -1) {
         struct termios opt;
         tcgetattr(usb_fd, &opt);
-        cfsetispeed(&opt, B9600); //set baudrate
-        cfsetospeed(&opt, B9600);
+        cfsetispeed(&opt, B115200); //set baudrate
+        cfsetospeed(&opt, B115200);
         opt.c_cflag |= CLOCAL;
         opt.c_cflag |= CREAD;
         tcsetattr(usb_fd, TCSANOW, &opt);
@@ -42,7 +42,7 @@ void configure_tty() {
 int write_buf(uint8_t* buffer, size_t n) {
 #ifdef DEBUG
     printf("writing: ");
-    for(int i=0; i < n; i++) {
+    for(size_t i=0; i < n; i++) {
         printf("0x%02X ", *(buffer+i));
     }
     printf("\n");

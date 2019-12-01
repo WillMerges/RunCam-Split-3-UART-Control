@@ -8,11 +8,17 @@
 
 // device info
 #define RCDEVICE_PROTOCOL_COMMAND_GET_DEVICE_INFO 0x00
-typedef struct response_info_s {
+#pragma pack(1)
+struct response_info_s {
     uint8_t header;
     uint8_t protocol_version;
     uint16_t feature;
     uint8_t crc8;
+};
+
+typedef union {
+    struct response_info_s response;
+    uint8_t as_bytes[sizeof(struct response_info_s)];
 } response_info;
 
 #pragma pack(1)
@@ -50,6 +56,6 @@ typedef struct response_handshake_s {
 } response_handshake;
 
 // functions
-response_info get_device_info();
+response_info* get_device_info();
 
 #endif
