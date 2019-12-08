@@ -4,29 +4,21 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#ifndef RUNCAM_S
+struct response_info_s {};
+struct request_info_s {};
+struct request_control_s {};
+struct response_handshake_s {};
+#endif
+
 #define HEADER 0xCC
 
 // device info
 #define RCDEVICE_PROTOCOL_COMMAND_GET_DEVICE_INFO 0x00
-#pragma pack(1)
-struct response_info_s {
-    uint8_t header;
-    uint8_t protocol_version;
-    uint16_t feature;
-    uint8_t crc8;
-};
-
 typedef union {
     struct response_info_s response;
     uint8_t as_bytes[sizeof(struct response_info_s)];
 } response_info;
-
-#pragma pack(1)
-struct request_info_s {
-    uint8_t header;
-    uint8_t command_id;
-    uint8_t crc8;
-};
 
 typedef union {
     struct request_info_s request;
@@ -35,24 +27,21 @@ typedef union {
 
 // camera control
 #define RCDEVICE_PROTOCOL_COMMAND_CAMERA_CONTROL 0x01
-typedef struct request_control_s {
-    uint8_t header;
-    uint8_t command_id;
-    uint8_t action_id;
-    uint8_t crc8;
+typedef union {
+    struct request_control_s request;
+    char as_bytes[sizeof(struct request_control_s)];
 } request_control;
 
 // handshake
 #define RCDEVICE_PROTOCOL_COMMAND_5KEY_CONNECTION 0x04
 #define RCDEVICE_PROTOCOL_5KEY_FUNCTION_OPEN 0x01
 #define RCDEVICE_PROTOCOL_5KEY_FUNCTION_CLOSE 0x02
+//control and handshake have same request structure
+typedef request_control request_handshake;
 
-typedef struct request_control_s request_handshake; //control and handshake have same request structure
-
-typedef struct response_handshake_s {
-    uint8_t header;
-    uint8_t action_id_response;
-    uint8_t crc8;
+typedef union {
+    struct response_handshake_s response;
+    char as_bytes[(sizeof(struct response_handshake_s))];
 } response_handshake;
 
 // functions
