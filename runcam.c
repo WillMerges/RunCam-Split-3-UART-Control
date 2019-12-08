@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "ttyUSB.h"
 
 // info response struct
@@ -61,7 +62,7 @@ response_info* get_device_info() {
     }
 
     uint8_t crc8 = crc_high_first(res->as_bytes, READ_SIZE_INFO - 1);
-    if(crc8 == res->respose.crc8) {
+    if(crc8 == res->response.crc8) {
             return res;
     } else {
         fprintf(stderr, "CRC8 did not match:\ncalculated: %i\ndevice: %i\n", crc8, res->response.crc8);
