@@ -128,3 +128,17 @@ RcRetType rc_check_feature(rc_feature_t feature, unsigned char* present) {
 
     return RC_SUCCESS;
 }
+
+RcRetType rc_exec_cmd(rc_action_t cmd) {
+    rc_request_t rq;
+    rq.header = RC_HEADER;
+    rq.command_id = RC_CID_COMMAND_CAM_CTL;
+    rq.action_id = cmd;
+    rq.crc = crc((uint8_t*)&rq, sizeof(rc_request_t) - sizeof(uint8_t));
+
+    if(sizeof(rc_request_t) != rc_write((uint8_t*)&rq, sizeof(rc_request_t))) {
+        return RC_FAILURE;
+    }
+
+    return RC_SUCCESS;
+}
