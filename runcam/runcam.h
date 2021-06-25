@@ -1,14 +1,8 @@
 #ifndef RUNCAM_H
 #define RUNCAM_H
 
+#include <stdlib.h>
 #include <stdint.h>
-
-// runcam reading buffer
-// data read off of the UART is used as a parameter
-typedef struct {
-    uint8_t* buffer;
-    size_t len;
-} rc_buffer_t;
 
 // device features
 typedef enum {
@@ -32,31 +26,39 @@ typedef enum {
     RC_ACT_STOP_REC, // stop recording
 } rc_action_t;
 
+// return type
+typedef enum {
+    RC_SUCCESS,
+    RC_FAILURE,
+    RC_NEED_DATA,
+    RC_BAD_DATA
+} RcRetType;
+
+
+// USER NEEDS TO SET THIS //
 // function pointer to be set by the host
 // should write 'data' out to the UART of the RunCam
 // assumed returns number of bytes written or -1 on error
 extern int (*rc_write)(unsigned char* data, size_t len);
 
-// return type
-typedef enum {
-    RC_SUCCESS,
-    RC_FAILURE,
-    RC_BAD_DATA
-} RcRetType;
-
+// USER NEEDS TO CALL THIS //
+// the user should call this function with every byte
+// the host receives from the runcam UART
+// not fast or efficient but it's like 6 bytes
+void rc_recv_byte(uint8_t byte);
 
 /********* USER FUNCTIONS *********/
 
 // sends an info request to the RunCam
-// sets 'requested_bytes' to the number of bytes it requests to be read before
-// calling rc_check_feature
+// call before calling rc_check_feature
 // returns RC_SUCCESS on success, RC_FAILURE on failure
-RcRetType rc_get_info(size_t* requested_bytes);
+RcRetType rc_get_info();
 
 // check if a feature is present
-// rc_request_feature should be called first and the response passed in as 'response'
-// returns RC_SUCCESS on succes or RC_BAD_DATA if the 'response' is bad
-RcRetType rc_check_feature(rc_buffer_t response, rc_feature_t feature, bool* present);
+// returns RC_SUCCESS on success, RC_NEED_DATA if not enough data has been read,
+// or RC_BAD_DATA if the data is incorrect
+// sets present to 1 if the feature is present, 0 otherwise
+RcRetType rc_check_feature(rc_feature_t feature, unsigned char* present);
 
 
 // TODO settings, text, and handshake

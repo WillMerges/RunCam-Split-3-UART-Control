@@ -15,7 +15,7 @@ int dummy_write_func(unsigned char* data, size_t len) {
 }
 
 // function pointer to the write function
-// this should change, set to a dummy function to avoic stomping on memory
+// this should change, set to a dummy function to avoid stomping on memory
 int (*rc_write)(unsigned char* data, size_t len) = dummy_write_func;
 
 // get device info request
@@ -65,16 +65,33 @@ uint8_t crc(uint8_t* data, size_t len) {
     return crc;
 }
 
+// reading buffer, needs to be at least as big as the biggest response
+uint8_t recv_buffer[sizeof(rc_response_info_t)];
+size_t bytes_to_read = 0; // how many bytes left to read
+size_t bytes_read = 0; // how many bytes have been read
+
+// called by the user on every byte read
+void rc_recv_byte(uint8_t byte) {
+    if(bytes_to_read) {
+        recv_buffer[bytes_read++] = byte;
+        bytes_to_read--;
+    }
+}
+
 // TODO maybe have this handle its own receiving? give it a read handler
-RcRetType rc_get_info(size_t* requested_bytes) {
+RcRetType rc_get_info() {
     rc_request_info_t rq;
     rq.header = RC_HEADER;
     rq.command_id = RC_CID_GET_DEVICE_INFO;
     rq.crc = crc((uint8_t*)&rq, sizeof(rc_request_info_t) - sizeof(uint8_t));
 
-    if(sizeof(rc_request_info_t) != write((uint8_t*)&rq, sizeof(rc_request_info_t))) {
+    if(sizeof(rc_request_info_t) != rc_write((uint8_t*)&rq, sizeof(rc_request_info_t))) {
         return RC_FAILURE;
     }
+
+    // setup the read
+    bytes_to_read = sizeof(rc_response_info_t);
+    bytes_read = 0;
 
     return RC_SUCCESS;
 }
@@ -82,20 +99,32 @@ RcRetType rc_get_info(size_t* requested_bytes) {
 // feature is the bit index of in the feature word
 // e.g. mask = (1 << enum val)
 // a one present at that position means the feature is present
-RcRetType rc_check_feature(rc_buffer_t response, rc_feature_t feature, bool* present) {
-    if(response.len != sizeof(rc_response_info_t)) {
+RcRetType rc_check_feature(rc_feature_t feature, unsigned char* present) {
+    if(bytes_to_read) {
+        // still waiting on data (or someone is)
+        return RC_NEED_DATA;
+    }
+
+    if(bytes_read != sizeof(rc_response_info_t)) {
         // size mismatch!
         return RC_BAD_DATA;
     }
 
-    rc_response_info_t* info = (rc_response_info_t*)response;
+    rc_response_info_t* info = (rc_response_info_t*)recv_buffer;
 
-    if(crc(response.buffer, response.len - sizeof(uint8_t)) != info->crc) {
-        return RC_BAD_DATA; // bad CRC
+    if(crc(recv_buffer, sizeof(rc_response_info_t) - sizeof(uint8_t)) != info->crc) {
+        // bad CRC
+        return RC_BAD_DATA;
     }
 
-    // TOOD maybe check the header is right, idk
-    present = info->features & (1 << feature);
+    if(info->header != RC_HEADER) {
+        // bad header
+        return RC_BAD_DATA;
+    }
+
+    // TODO can check the protocol version
+
+    *present = info->features & (1 << feature);
 
     return RC_SUCCESS;
 }
