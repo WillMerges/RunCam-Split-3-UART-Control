@@ -61,7 +61,7 @@ RcRetType rc_get_info();
 RcRetType rc_check_feature(rc_feature_t feature, unsigned char* present);
 
 // execute a command
-RcRetType rc_exec_cmd(rc_action_t cmd)
+RcRetType rc_exec_cmd(rc_action_t cmd);
 
 // TODO settings, text, and handshake
 
