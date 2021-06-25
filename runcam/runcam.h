@@ -3,34 +3,14 @@
 
 #include <stdint.h>
 
-#define RC_HEADER 0xCC
-
-// command IDs
-// get device info
-#define RC_CID_GET_DEVICE_INFO 0x00
-// command camera control
-#define RC_CID_COMMAND_CAM_CTL 0x01
-
-
-// get device info request
+// runcam reading buffer
+// data read off of the UART is used as a parameter
 typedef struct {
-    uint8_t header;
-    uint8_t command_id;
-    uint8_t crc;
-} rc_request_info_t;
+    uint8_t* buffer;
+    size_t len;
+} rc_buffer_t;
 
-// get device info response
-typedef struct {
-    uint8_t header;
-    uint8_t protocol_version;
-    uint16_t feature;
-    uint8_t crc;
-} rc_response_info_t;
-
-// device feature masks
-// each value represents a one in the nth position of the mask
-// e.g. mask = (1 << enum val)
-// a one present at that position means the feature is present
+// device features
 typedef enum {
     RC_FT_SIM_POWER,    // simulate power button
     RC_FT_SIM_WIFI,     // simulate wifi button
@@ -43,15 +23,6 @@ typedef enum {
     // for some reason the 8th bit is skipped
 } rc_feature_t;
 
-
-// used for every other action/function command
-typedef struct {
-    uint8_t header;
-    uint8_t command_id;
-    uint8_t action_id;
-    uint8_t crc;
-} rc_request_t;
-
 // camera control actions
 typedef enum {
     RC_ACT_WIFI, // simulate click the wifi button
@@ -61,25 +32,33 @@ typedef enum {
     RC_ACT_STOP_REC, // stop recording
 } rc_action_t;
 
-// TODO settings, we can set resolution and draw text
-
-
 // function pointer to be set by the host
 // should write 'data' out to the UART of the RunCam
+// assumed returns number of bytes written or -1 on error
 extern int (*rc_write)(unsigned char* data, size_t len);
 
 // return type
 typedef enum {
     RC_SUCCESS,
-    RC_FAILURE
+    RC_FAILURE,
+    RC_BAD_DATA
 } RcRetType;
 
-// TODO we may need to do a handshake?
 
-// USER FUNCTIONS //
-// TODO
+/********* USER FUNCTIONS *********/
 
-// I think reading should be handled outside of this module
-// buffers passed in after the function is called
+// sends an info request to the RunCam
+// sets 'requested_bytes' to the number of bytes it requests to be read before
+// calling rc_check_feature
+// returns RC_SUCCESS on success, RC_FAILURE on failure
+RcRetType rc_get_info(size_t* requested_bytes);
+
+// check if a feature is present
+// rc_request_feature should be called first and the response passed in as 'response'
+// returns RC_SUCCESS on succes or RC_BAD_DATA if the 'response' is bad
+RcRetType rc_check_feature(rc_buffer_t response, rc_feature_t feature, bool* present);
+
+
+// TODO settings, text, and handshake
 
 #endif
